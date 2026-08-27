@@ -1,370 +1,88 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Kirby Alahama, NPC Noob e Teela Protetora</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #1a1a1a;
-    }
-    canvas {
-      border: 2px solid #fff;
-      background-color: #333;
-    }
-  </style>
+<meta charset="utf-8">
+<title>Alahama - Cenário 3D</title>
+<style>body{margin:0;overflow:hidden} canvas{display:block}</style>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
+</script>
 </head>
 <body>
+<script type="module">
+import * as THREE from 'three';
 
-<canvas id="gameCanvas" width="800" height="500"></canvas>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x00e5ff); // seu céu ciano
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0,3,8);
+camera.lookAt(0,0,0);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(5,10,5);
+scene.add(light);
 
-<script>
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-
-  // Jogador: Kirby Alahama
-  const player = {
-    name: "Alahama",
-    x: 150,
-    y: 250,
-    radius: 20,
-    speed: 4
-  };
-
-  // NPC Inimigo: Noob
-  const enemyNoob = {
-    x: 650,
-    y: 200,
-    width: 40,
-    height: 80,
-    speed: 1.5
-  };
-
-  // Guardiã: Young Teela (Protetora)
-  const teela = {
-    name: "Teela",
-    x: 100,
-    y: 250,
-    width: 24,
-    height: 65,
-    speed: 3.2,
-    shieldActive: false
-  };
-
-  // Inimigo Adicional: Creeper Azul
-  const creeper = {
-    name: "Creeper Azul",
-    x: 700,
-    y: 300,
-    speed: 1.2
-  };
-
-  // Ponto Nemo
-  const pontoNemo = {
-    y: 70,
-    z: 60,
-    width: 300,
-    height: 200
-  };
-
-  // Partículas de água
-  const waterParticles = [];
-  for (let i = 0; i < 30; i++) {
-    waterParticles.push({
-      x: pontoNemo.z + Math.random() * pontoNemo.width,
-      y: pontoNemo.y + Math.random() * pontoNemo.height,
-      radius: Math.random() * 2 + 1,
-      alpha: Math.random() * 0.5 + 0.2,
-      speedY: Math.random() * 0.5 - 0.25
-    });
+// FUNÇÃO PRA CRIAR BLOCO COM CONTORNO PRETO
+function criarBloco(x,y,z, cor, comGrama=false){
+  const geo = new THREE.BoxGeometry(1,1,1);
+  // deixa torto igual seu desenho
+  const pos = geo.attributes.position;
+  for(let i=0;i<pos.count;i++){
+    pos.setX(i, pos.getX(i)+(Math.random()-0.5)*0.08);
+    pos.setY(i, pos.getY(i)+(Math.random()-0.5)*0.08);
   }
-
-  const keys = {};
-  window.addEventListener('keydown', (e) => keys[e.key] = true);
-  window.addEventListener('keyup', (e) => keys[e.key] = false);
-
-  // Movimentação do Jogador
-  function updatePlayer() {
-    if ((keys.ArrowUp || keys.w) && player.y - player.radius > 0) player.y -= player.speed;
-    if ((keys.ArrowDown || keys.s) && player.y + player.radius < canvas.height) player.y += player.speed;
-    if ((keys.ArrowLeft || keys.a) && player.x - player.radius > 0) player.x -= player.speed;
-    if ((keys.ArrowRight || keys.d) && player.x + player.radius < canvas.width) player.x += player.speed;
+  const mat = new THREE.MeshToonMaterial({color: cor});
+  const bloco = new THREE.Mesh(geo, mat);
+  bloco.position.set(x,y,z);
+  // contorno preto grosso
+  const contorno = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+  contorno.scale.set(1.15,1.15,1.15);
+  bloco.add(contorno);
+  if(comGrama){
+    const grama = new THREE.Mesh(new THREE.BoxGeometry(1,0.25,1), new THREE.MeshToonMaterial({color:0x00ff00}));
+    grama.position.y = 0.6;
+    const contG = new THREE.Mesh(grama.geometry, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+    contG.scale.set(1.1,1.5,1.1);
+    grama.add(contG);
+    bloco.add(grama);
   }
+  scene.add(bloco);
+  return bloco;
+}
 
-  // Movimentação do Noob
-  function updateEnemy() {
-    const dx = player.x - enemyNoob.x;
-    const dy = player.y - enemyNoob.y;
-    const dist = Math.hypot(dx, dy);
+// CENÁRIO DA SUA IMAGEM
+// chão marrom + verde
+for(let x=-8;x<=8;x++){
+ for(let z=-3;z<=2;z++){
+  if(Math.random()>0.1) criarBloco(x, -2, z, 0x8B4513, true);
+ }
+}
+// plataforma cinza
+for(let x=-6;x<=6;x++) criarBloco(x, -0.3, 0, 0x6e6e6e);
+// blocos marrons bagunçados de cima
+criarBloco(-5,0.8,0.5,0x8B4513); criarBloco(-3,0.5,0,0x8B4513);
+criarBloco(-1,0.7,0,0x8B4513); criarBloco(0,0.4,0.5,0x8B4513);
+criarBloco(2,0.9,0,0x8B4513); criarBloco(3.5,0.3,0,0x8B4513);
+criarBloco(5,1.2,0.3,0x8B4513);
 
-    if (dist > 10) {
-      enemyNoob.x += (dx / dist) * enemyNoob.speed;
-      enemyNoob.y += (dy / dist) * enemyNoob.speed;
-    }
-  }
+// MONSTRO DE 1 OLHO AO FUNDO
+const monstro = new THREE.Mesh(new THREE.SphereGeometry(3,16,16), new THREE.MeshToonMaterial({color:0xffffff}));
+monstro.position.set(0,5,-8); scene.add(monstro);
+const contM = new THREE.Mesh(monstro.geometry, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+contM.scale.set(1.1,1.1,1.1); monstro.add(contM);
+const olhoVermelho = new THREE.Mesh(new THREE.SphereGeometry(0.8,16,16), new THREE.MeshBasicMaterial({color:0xcc0000}));
+olhoVermelho.position.set(0,5,-5.5); scene.add(olhoVermelho);
+const pupila = new THREE.Mesh(new THREE.SphereGeometry(0.3,16,16), new THREE.MeshBasicMaterial({color:0x000000}));
+pupila.position.set(0,5,-5); scene.add(pupila);
 
-  // Movimentação do Creeper Azul
-  function updateCreeper() {
-    const dx = player.x - creeper.x;
-    const dy = player.y - creeper.y;
-    const dist = Math.hypot(dx, dy);
-
-    if (dist > 10) {
-      creeper.x += (dx / dist) * creeper.speed;
-      creeper.y += (dy / dist) * creeper.speed;
-    }
-  }
-
-  // Movimentação da Teela
-  function updateTeela() {
-    const distToEnemy = Math.hypot(enemyNoob.x - player.x, enemyNoob.y - player.y);
-
-    let targetX, targetY;
-
-    if (distToEnemy < 180) {
-      targetX = (player.x + enemyNoob.x) / 2;
-      targetY = (player.y + enemyNoob.y) / 2;
-      teela.shieldActive = true;
-
-      const distTeelaEnemy = Math.hypot(enemyNoob.x - teela.x, enemyNoob.y - teela.y);
-      if (distTeelaEnemy < 40) {
-        enemyNoob.x += (enemyNoob.x - teela.x) * 0.2;
-        enemyNoob.y += (enemyNoob.y - teela.y) * 0.2;
-      }
-    } else {
-      targetX = player.x - 40;
-      targetY = player.y - 10;
-      teela.shieldActive = false;
-    }
-
-    const dx = targetX - teela.x;
-    const dy = targetY - teela.y;
-    const dist = Math.hypot(dx, dy);
-
-    if (dist > 5) {
-      teela.x += (dx / dist) * teela.speed;
-      teela.y += (dy / dist) * teela.speed;
-    }
-  }
-
-  // Desenhar Ponto Nemo
-  function drawPontoNemo() {
-    const x = pontoNemo.z;
-    const y = pontoNemo.y;
-
-    const oceanGradient = ctx.createLinearGradient(x, y, x, y + pontoNemo.height);
-    oceanGradient.addColorStop(0, 'rgba(10, 25, 47, 0.85)');
-    oceanGradient.addColorStop(0.7, 'rgba(4, 12, 24, 0.95)');
-    oceanGradient.addColorStop(1, 'rgba(1, 5, 10, 1.0)');
-
-    ctx.fillStyle = oceanGradient;
-    ctx.fillRect(x, y, pontoNemo.width, pontoNemo.height);
-
-    ctx.strokeStyle = 'rgba(64, 169, 255, 0.3)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    for (let i = 0; i <= pontoNemo.width; i += 20) {
-      ctx.lineTo(x + i, y + Math.sin((Date.now() / 500) + i) * 3);
-    }
-    ctx.stroke();
-
-    waterParticles.forEach(p => {
-      p.y += p.speedY;
-      if (p.y < y) p.y = y + pontoNemo.height;
-      if (p.y > y + pontoNemo.height) p.y = y;
-
-      ctx.fillStyle = `rgba(135, 206, 250, ${p.alpha})`;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(`PONTO NEMO [Y:${pontoNemo.y} Z:${pontoNemo.z}]`, x + 10, y + 20);
-  }
-
-  // Desenhar Chão do Minecraft
-  function drawMinecraftGround() {
-    const groundY = 400;
-    const blockSize = 40;
-
-    for (let x = 0; x < canvas.width; x += blockSize) {
-      for (let y = groundY; y < canvas.height; y += blockSize) {
-        ctx.fillStyle = '#8B5A2B';
-        ctx.fillRect(x, y, blockSize, blockSize);
-
-        ctx.fillStyle = '#5C3A1E';
-        ctx.fillRect(x + 8, y + 8, 8, 8);
-        ctx.fillRect(x + 24, y + 20, 8, 8);
-
-        if (y === groundY) {
-          ctx.fillStyle = '#55A825';
-          ctx.fillRect(x, y, blockSize, 12);
-
-          ctx.fillRect(x + 4, y + 12, 6, 6);
-          ctx.fillRect(x + 16, y + 12, 8, 8);
-          ctx.fillRect(x + 28, y + 12, 6, 5);
-        }
-
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.strokeRect(x, y, blockSize, blockSize);
-      }
-    }
-  }
-
-  // Desenhar Neblina
-  function drawFog() {
-    const fogGradient = ctx.createLinearGradient(0, 0, 0, 400);
-    fogGradient.addColorStop(0, 'rgba(200, 210, 220, 0.6)');
-    fogGradient.addColorStop(0.6, 'rgba(200, 210, 220, 0.3)');
-    fogGradient.addColorStop(1, 'rgba(200, 210, 220, 0.05)');
-
-    ctx.fillStyle = fogGradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  // Desenhar Teela
-  function drawTeela() {
-    const x = teela.x;
-    const y = teela.y;
-
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-    ctx.beginPath();
-    ctx.ellipse(x, y + 30, 15, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#4A2E18';
-    ctx.fillRect(x - 8, y + 15, 6, 15);
-    ctx.fillRect(x + 2, y + 15, 6, 15);
-
-    ctx.fillStyle = '#E0A96D';
-    ctx.fillRect(x - 7, y, 5, 16);
-    ctx.fillRect(x + 2, y, 5, 16);
-
-    ctx.fillStyle = '#D4AF37';
-    ctx.fillRect(x - 9, y - 18, 18, 20);
-    ctx.fillStyle = '#F5F5F5';
-    ctx.fillRect(x - 6, y - 14, 12, 14);
-
-    ctx.fillStyle = '#E0A96D';
-    ctx.fillRect(x - 13, y - 16, 4, 18);
-    ctx.fillRect(x + 9, y - 16, 4, 18);
-    ctx.fillStyle = '#D4AF37';
-    ctx.fillRect(x - 13, y - 8, 4, 6);
-    ctx.fillRect(x + 9, y - 8, 4, 6);
-
-    ctx.fillStyle = '#E0A96D';
-    ctx.beginPath();
-    ctx.arc(x, y - 26, 8, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#A03C11';
-    ctx.beginPath();
-    ctx.arc(x, y - 29, 9, Math.PI, Math.PI * 2);
-    ctx.fill();
-    ctx.fillRect(x - 9, y - 29, 4, 12);
-    ctx.fillRect(x + 5, y - 29, 4, 12);
-
-    if (teela.shieldActive) {
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(x, y - 5, 35, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = '#FFD700';
-    ctx.font = '11px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(teela.name, x, y - 40);
-  }
-
-  // Desenhar Noob
-  function drawNoob() {
-    ctx.fillStyle = '#FFD700';
-    ctx.fillRect(enemyNoob.x - 12, enemyNoob.y - 40, 24, 24);
-    ctx.fillStyle = '#FF0000';
-    ctx.fillRect(enemyNoob.x - 16, enemyNoob.y - 16, 32, 32);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(enemyNoob.x - 14, enemyNoob.y + 16, 28, 30);
-  }
-
-  // Desenhar Creeper Azul
-  function drawCreeper() {
-    const x = creeper.x;
-    const y = creeper.y;
-
-    ctx.fillStyle = '#00BCD4';
-    ctx.fillRect(x - 12, y - 25, 24, 35);
-
-    ctx.fillStyle = '#008BA3';
-    ctx.fillRect(x - 10, y - 20, 6, 6);
-    ctx.fillRect(x + 2, y - 10, 6, 6);
-    ctx.fillRect(x - 6, y + 2, 6, 6);
-
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(x - 8, y - 20, 5, 5);
-    ctx.fillRect(x + 3, y - 20, 5, 5);
-    ctx.fillRect(x - 3, y - 13, 6, 8);
-    ctx.fillRect(x - 6, y - 9, 3, 8);
-    ctx.fillRect(x + 3, y - 9, 3, 8);
-
-    ctx.fillStyle = '#008BA3';
-    ctx.fillRect(x - 12, y + 10, 5, 10);
-    ctx.fillRect(x - 5, y + 10, 5, 10);
-    ctx.fillRect(x, y + 10, 5, 10);
-    ctx.fillRect(x + 7, y + 10, 5, 10);
-
-    ctx.fillStyle = '#80D8FF';
-    ctx.font = '11px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(creeper.name, x, y - 32);
-  }
-
-  // Desenhar Jogador (Kirby)
-  function drawPlayer() {
-    ctx.fillStyle = '#29B6F6';
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(player.name, player.x, player.y - 28);
-  }
-
-  // Loop de Animação
-  function gameLoop() {
-    updatePlayer();
-    updateEnemy();
-    updateTeela();
-    updateCreeper();
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    drawPontoNemo();
-    drawMinecraftGround();
-
-    drawNoob();
-    drawTeela();
-    drawCreeper();
-    drawPlayer();
-
-    drawFog();
-
-    requestAnimationFrame(gameLoop);
-  }
-
-  gameLoop();
-</script>
-
-</body>
-</html>
+// ALAHAMA - PROTAGONISTA VESGO
+const alahama = new THREE.Group();
+const corpoGeo = new THREE.SphereGeometry(0.6,16,16); corpoGeo.scale(1.1,1,0.8);
+const corpo = new THREE.Mesh(corpoGeo, new THREE.MeshToonMaterial({color:0x8a5cff})); alahama.add(corpo);
+const contA = new THREE.Mesh(corpoGeo, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+contA.scale.set(1.2,1.2,1.2); alahama.add(contA);
+const eyeGeo = new THREE.CapsuleGeometry(0.05,0.18,4,8);
+const eyeMat = new THREE.MeshBasicMaterial({
