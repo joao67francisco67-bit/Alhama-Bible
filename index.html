@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Alahama - Cenário 3D</title>
+<style>body{margin:0;overflow:hidden} canvas{display:block}</style>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x00e5ff); // seu céu ciano
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0,3,8);
+camera.lookAt(0,0,0);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(5,10,5);
+scene.add(light);
+
+// FUNÇÃO PRA CRIAR BLOCO COM CONTORNO PRETO
+function criarBloco(x,y,z, cor, comGrama=false){
+  const geo = new THREE.BoxGeometry(1,1,1);
+  // deixa torto igual seu desenho
+  const pos = geo.attributes.position;
+  for(let i=0;i<pos.count;i++){
+    pos.setX(i, pos.getX(i)+(Math.random()-0.5)*0.08);
+    pos.setY(i, pos.getY(i)+(Math.random()-0.5)*0.08);
+  }
+  const mat = new THREE.MeshToonMaterial({color: cor});
+  const bloco = new THREE.Mesh(geo, mat);
+  bloco.position.set(x,y,z);
+  // contorno preto grosso
+  const contorno = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+  contorno.scale.set(1.15,1.15,1.15);
+  bloco.add(contorno);
+  if(comGrama){
+    const grama = new THREE.Mesh(new THREE.BoxGeometry(1,0.25,1), new THREE.MeshToonMaterial({color:0x00ff00}));
+    grama.position.y = 0.6;
+    const contG = new THREE.Mesh(grama.geometry, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+    contG.scale.set(1.1,1.5,1.1);
+    grama.add(contG);
+    bloco.add(grama);
+  }
+  scene.add(bloco);
+  return bloco;
+}
+
+// CENÁRIO DA SUA IMAGEM
+// chão marrom + verde
+for(let x=-8;x<=8;x++){
+ for(let z=-3;z<=2;z++){
+  if(Math.random()>0.1) criarBloco(x, -2, z, 0x8B4513, true);
+ }
+}
+// plataforma cinza
+for(let x=-6;x<=6;x++) criarBloco(x, -0.3, 0, 0x6e6e6e);
+// blocos marrons bagunçados de cima
+criarBloco(-5,0.8,0.5,0x8B4513); criarBloco(-3,0.5,0,0x8B4513);
+criarBloco(-1,0.7,0,0x8B4513); criarBloco(0,0.4,0.5,0x8B4513);
+criarBloco(2,0.9,0,0x8B4513); criarBloco(3.5,0.3,0,0x8B4513);
+criarBloco(5,1.2,0.3,0x8B4513);
+
+// MONSTRO DE 1 OLHO AO FUNDO
+const monstro = new THREE.Mesh(new THREE.SphereGeometry(3,16,16), new THREE.MeshToonMaterial({color:0xffffff}));
+monstro.position.set(0,5,-8); scene.add(monstro);
+const contM = new THREE.Mesh(monstro.geometry, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+contM.scale.set(1.1,1.1,1.1); monstro.add(contM);
+const olhoVermelho = new THREE.Mesh(new THREE.SphereGeometry(0.8,16,16), new THREE.MeshBasicMaterial({color:0xcc0000}));
+olhoVermelho.position.set(0,5,-5.5); scene.add(olhoVermelho);
+const pupila = new THREE.Mesh(new THREE.SphereGeometry(0.3,16,16), new THREE.MeshBasicMaterial({color:0x000000}));
+pupila.position.set(0,5,-5); scene.add(pupila);
+
+// ALAHAMA - PROTAGONISTA VESGO
+const alahama = new THREE.Group();
+const corpoGeo = new THREE.SphereGeometry(0.6,16,16); corpoGeo.scale(1.1,1,0.8);
+const corpo = new THREE.Mesh(corpoGeo, new THREE.MeshToonMaterial({color:0x8a5cff})); alahama.add(corpo);
+const contA = new THREE.Mesh(corpoGeo, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+contA.scale.set(1.2,1.2,1.2); alahama.add(contA);
+const eyeGeo = new THREE.CapsuleGeometry(0.05,0.18,4,8);
+const eyeMat = new THREE.MeshBasicMaterial({
