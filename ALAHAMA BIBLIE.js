@@ -1,208 +1,105 @@
-// 1. CARREGADOR DE TEXTURAS E CONFIGURAÇÃO
-const carregadorTextura = new THREE.TextureLoader();
+// Configuração da cena, câmera e renderizador
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-function ajustarPixelArt(textura) {
-  textura.magFilter = THREE.NearestFilter;
-  textura.minFilter = THREE.NearestFilter;
-  return textura;
-}
+// Iluminação
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambientLight);
 
-// 2. CONFIGURAÇÃO DA CENA E NÉVOA
-cena.background = new THREE.Color(0x001021);
-cena.fog = new THREE.FogExp2(0x001021, 0.08);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(10, 20, 15);
+scene.add(directionalLight);
 
-// 3. CHÃO DE BLOCOS DE GRAMA (LIMITE DE -10 A 10)
-const texLado = ajustarPixelArt(carregadorTextura.load('grass_block_side.png'));
-const texTopo = ajustarPixelArt(carregadorTextura.load('grass_block_top.png'));
-const texBaixo = ajustarPixelArt(carregadorTextura.load('dirt.png'));
+// Grupo principal que contém o cenário (ilha) e o personagem
+const worldGroup = new THREE.Group();
+scene.add(worldGroup);
 
-const materiaisBloco = [
-  new THREE.MeshLambertMaterial({ map: texLado }),
-  new THREE.MeshLambertMaterial({ map: texLado }),
-  new THREE.MeshLambertMaterial({ map: texTopo }),
-  new THREE.MeshLambertMaterial({ map: texBaixo }),
-  new THREE.MeshLambertMaterial({ map: texLado }),
-  new THREE.MeshLambertMaterial({ map: texLado })
-];
+// Criando a ilha (base circular)
+const islandGeometry = new THREE.CylinderGeometry(10, 10, 1, 32);
+const islandMaterial = new THREE.MeshStandardMaterial({ color: 0x2e8b57 });
+const island = new THREE.Mesh(islandGeometry, islandMaterial);
+island.position.y = -0.5;
+worldGroup.add(island);
 
-const geometriaBloco = new THREE.BoxGeometry(1, 1, 1);
+// Criando o personagem (Homem Caixinha)
+const playerGeometry = new THREE.BoxGeometry(1, 1, 1);
+const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xff4500 });
+const player = new THREE.Mesh(playerGeometry, playerMaterial);
+player.position.set(0, 0.5, 0);
+worldGroup.add(player);
 
-for (let x = -10; x <= 10; x++) {
-  for (let z = -10; z <= 10; z++) {
-    const blocoGrama = new THREE.Mesh(geometriaBloco, materiaisBloco);
-    blocoGrama.position.set(x, 0, z);
-    cena.add(blocoGrama);
-  }
-}
-
-// 4. PERSONAGEM NOOB ROBLOX (CABEÇA DE CAIXA)
-const noobRoblox = new THREE.Group();
-
-const cabeca = new THREE.Mesh(
-  new THREE.BoxGeometry(0.8, 0.8, 0.8),
-  new THREE.MeshLambertMaterial({ color: 0xffd700 })
-);
-cabeca.position.y = 1.4;
-
-const torso = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 1.2, 0.5),
-  new THREE.MeshLambertMaterial({ color: 0x0000ff })
-);
-torso.position.y = 0.4;
-
-const pernaEsq = new THREE.Mesh(
-  new THREE.BoxGeometry(0.45, 1, 0.5),
-  new THREE.MeshLambertMaterial({ color: 0x00ff00 })
-);
-pernaEsq.position.set(-0.25, -0.7, 0);
-
-const pernaDir = pernaEsq.clone();
-pernaDir.position.x = 0.25;
-
-noobRoblox.add(cabeca, torso, pernaEsq, pernaDir);
-noobRoblox.position.set(0, 1.7, 0);
-cena.add(noobRoblox);
-
-// 5. KIRBY AZUL (ALAHAMA)
-const alahama = new THREE.Group();
-const corpoGeo = new THREE.SphereGeometry(1, 32, 32);
-const corpoMat = new THREE.MeshLambertMaterial({ color: 0x1E90FF });
-const corpo = new THREE.Mesh(corpoGeo, corpoMat);
-alahama.add(corpo);
-
-const olhoGeo = new THREE.CapsuleGeometry(0.08, 0.2, 16, 16);
-const olhoMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-const olhoEsq = new THREE.Mesh(olhoGeo, olhoMat);
-olhoEsq.position.set(-0.25, 0.2, 0.9);
-olhoEsq.rotation.z = 0.1;
-const olhoDir = olhoEsq.clone();
-olhoDir.position.x = 0.25;
-alahama.add(olhoEsq, olhoDir);
-
-const peGeo = new THREE.SphereGeometry(0.35, 16, 16);
-peGeo.scale(1, 0.5, 1.5);
-const peMat = new THREE.MeshLambertMaterial({ color: 0xFF1493 });
-const peEsq = new THREE.Mesh(peGeo, peMat);
-peEsq.position.set(-0.5, -0.8, 0.2);
-const peDir = peEsq.clone();
-peDir.position.x = 0.5;
-alahama.add(peEsq, peDir);
-
-alahama.position.set(0, 1.5, -3);
-cena.add(alahama);
-
-// 6. CREEPER AZUL AMIGO
-const geometriaCreeper = new THREE.BoxGeometry(0.8, 2, 0.8);
-const materialCreeper = new THREE.MeshLambertMaterial({ color: 0x00aaff });
-const creeperAzul = new THREE.Mesh(geometriaCreeper, materialCreeper);
-creeperAzul.position.set(3, 2, -2);
-cena.add(creeperAzul);
-
-// 7. NPC MONI MONI
-const moniMoni = new THREE.Group();
-const jaqueta = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 1.4, 0.6),
-  new THREE.MeshLambertMaterial({ color: 0xcc0000 })
-);
-jaqueta.position.y = 0.7;
-moniMoni.add(jaqueta);
-
-const cabecaMoni = new THREE.Mesh(
-  new THREE.SphereGeometry(0.4, 32, 32),
-  new THREE.MeshLambertMaterial({ color: 0xffdbac })
-);
-cabecaMoni.position.y = 1.7;
-moniMoni.add(cabecaMoni);
-
-const pernaMoniEsq = new THREE.Mesh(
-  new THREE.BoxGeometry(0.3, 1, 0.3),
-  new THREE.MeshLambertMaterial({ color: 0x000000 })
-);
-pernaMoniEsq.position.set(-0.25, 0.1, 0);
-const pernaMoniDir = pernaMoniEsq.clone();
-pernaMoniDir.position.x = 0.25;
-moniMoni.add(pernaMoniEsq, pernaMoniDir);
-
-const chapeu = new THREE.Mesh(
-  new THREE.ConeGeometry(0.4, 0.4, 32),
-  new THREE.MeshLambertMaterial({ color: 0x000000 })
-);
-chapeu.position.y = 2.1;
-moniMoni.add(chapeu);
-
-moniMoni.position.set(-2, 1, 2);
-cena.add(moniMoni);
-
-// 8. CÂMERA
-camera.position.set(0, 5, 10);
+// Posição da Câmera
+camera.position.set(0, 12, 16);
 camera.lookAt(0, 0, 0);
 
-// 9. CONTROLES POR TECLADO (PC) COM LIMITES
-window.addEventListener('keydown', (event) => {
-    const velocidade = 0.5;
-    switch (event.key) {
-        case 'ArrowUp':
-            if (noobRoblox.position.z - velocidade >= -10) {
-                noobRoblox.position.z -= velocidade;
-            }
-            break;
-        case 'ArrowDown':
-            if (noobRoblox.position.z + velocidade <= 10) {
-                noobRoblox.position.z += velocidade;
-            }
-            break;
-        case 'ArrowLeft':
-            if (noobRoblox.position.x - velocidade >= -10) {
-                noobRoblox.position.x -= velocidade;
-            }
-            break;
-        case 'ArrowRight':
-            if (noobRoblox.position.x + velocidade <= 10) {
-                noobRoblox.position.x += velocidade;
-            }
-            break;
-    }
-});
-
-// 10. CONTROLES POR INCLINAÇÃO (CELULAR)
+// Estado dos controles
+const keys = { W: false, A: false, S: false, D: false };
 let tiltX = 0;
-let tiltZ = 0;
+let tiltY = 0;
 
-window.addEventListener('deviceorientation', (event) => {
-    if (event.gamma !== null && event.beta !== null) {
-        tiltX = event.gamma / 30;
-        tiltZ = (event.beta - 45) / 30;
-    }
+// Eventos de Teclado
+window.addEventListener('keydown', (e) => {
+  const key = e.key.toUpperCase();
+  if (key in keys) keys[key] = true;
 });
 
-// 11. LOOP PRINCIPAL DO JOGO (GAMELOOP)
-let tempoPulo = 0;
+window.addEventListener('keyup', (e) => {
+  const key = e.key.toUpperCase();
+  if (key in keys) keys[key] = false;
+});
 
-function gameLoop() {
-  requestAnimationFrame(gameLoop);
-
-  // Animação do Kirby (Alahama)
-  alahama.rotation.y += 0.01;
-  tempoPulo += 0.05;
-  alahama.position.y = 1.5 + Math.abs(Math.sin(tempoPulo)) * 0.4;
-
-  // Animação do Moni Moni
-  moniMoni.rotation.y += 0.01;
-
-  // Movimento por inclinação do Celular (com limites)
-  const sensibilidade = 0.15;
-  if (Math.abs(tiltX) > 0.1) {
-      let novaPosX = noobRoblox.position.x + tiltX * sensibilidade;
-      noobRoblox.position.x = Math.max(-10, Math.min(10, novaPosX));
+// Eventos de Inclinação do Celular (Gyroscope)
+window.addEventListener('deviceorientation', (e) => {
+  if (e.beta !== null && e.gamma !== null) {
+    // Normaliza e limita a inclinação para suavizar a movimentação
+    tiltX = Math.max(-1, Math.min(1, e.gamma / 30));
+    tiltY = Math.max(-1, Math.min(1, (e.beta - 45) / 30)); // 45° é uma inclinação confortável de segurar
   }
-  if (Math.abs(tiltZ) > 0.1) {
-      let novaPosZ = noobRoblox.position.z + tiltZ * sensibilidade;
-      noobRoblox.position.z = Math.max(-10, Math.min(10, novaPosZ));
+});
+
+// Loop principal de Animação
+function animate() {
+  requestAnimationFrame(animate);
+
+  // 1. Rotação contínua do mundo (ilha + personagem)
+  worldGroup.rotation.y += 0.005;
+
+  // 2. Vetor de movimento local baseado nos controles
+  const speed = 0.15;
+  const moveVector = new THREE.Vector3(0, 0, 0);
+
+  // Movimento por Teclado
+  if (keys.W) moveVector.z -= speed;
+  if (keys.S) moveVector.z += speed;
+  if (keys.A) moveVector.x -= speed;
+  if (keys.D) moveVector.x += speed;
+
+  // Movimento por Inclinação do Celular
+  if (Math.abs(tiltX) > 0.1) moveVector.x += tiltX * speed;
+  if (Math.abs(tiltY) > 0.1) moveVector.z += tiltY * speed;
+
+  // 3. Aplica o movimento no sistema de coordenadas do próprio worldGroup
+  player.position.add(moveVector);
+
+  // 4. Limita o personagem para não sair dos limites da ilha (raio = 9.5)
+  const maxRadius = 9.5;
+  const currentRadius = Math.sqrt(player.position.x ** 2 + player.position.z ** 2);
+  if (currentRadius > maxRadius) {
+    player.position.x = (player.position.x / currentRadius) * maxRadius;
+    player.position.z = (player.position.z / currentRadius) * maxRadius;
   }
 
-  // Renderiza a cena
-  renderizador.render(cena, camera);
+  renderer.render(scene, camera);
 }
 
-// Inicia o jogo
-gameLoop();
+// Ajuste automático quando a janela muda de tamanho
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+animate();
