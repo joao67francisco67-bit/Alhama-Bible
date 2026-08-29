@@ -81,7 +81,10 @@ function animate() {
   if (Math.abs(tiltX) > 0.1) moveVector.x += tiltX * speed;
   if (Math.abs(tiltY) > 0.1) moveVector.z += tiltY * speed;
 
-  // 3. Aplica o movimento no sistema de coordenadas do próprio worldGroup
+  // Ajusta o vetor de movimento para alinhar com a rotação atual da ilha
+  moveVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), worldGroup.rotation.y);
+
+  // 3. Aplica o movimento no personagem
   player.position.add(moveVector);
 
   // 4. Limita o personagem para não sair dos limites da ilha (raio = 9.5)
