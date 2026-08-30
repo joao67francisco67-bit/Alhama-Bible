@@ -13,7 +13,7 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(10, 20, 15);
 scene.add(directionalLight);
 
-// Grupo principal que contém o cenário (ilha) e o personagem
+// Grupo do cenário (ilha) que gira
 const worldGroup = new THREE.Group();
 scene.add(worldGroup);
 
@@ -24,12 +24,12 @@ const island = new THREE.Mesh(islandGeometry, islandMaterial);
 island.position.y = -0.5;
 worldGroup.add(island);
 
-// Criando o personagem (Homem Caixinha)
+// Criando o personagem (Homem Caixinha) - Adicionado à cena para ser independente do giro da ilha
 const playerGeometry = new THREE.BoxGeometry(1, 1, 1);
 const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xff4500 });
 const player = new THREE.Mesh(playerGeometry, playerMaterial);
 player.position.set(0, 0.5, 0);
-worldGroup.add(player);
+scene.add(player);
 
 // Posição da Câmera
 camera.position.set(0, 12, 16);
@@ -63,7 +63,7 @@ window.addEventListener('deviceorientation', (e) => {
 function animate() {
   requestAnimationFrame(animate);
 
-  // 1. Rotação contínua do mundo (ilha + personagem)
+  // 1. Rotação contínua da ilha
   worldGroup.rotation.y += 0.005;
 
   // 2. Vetor de movimento local baseado nos controles
@@ -80,13 +80,10 @@ function animate() {
   if (Math.abs(tiltX) > 0.1) moveVector.x += tiltX * speed;
   if (Math.abs(tiltY) > 0.1) moveVector.z += tiltY * speed;
 
-  // Corrigido: ajusta a direção do movimento de acordo com o giro da ilha
-  moveVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), worldGroup.rotation.y);
-
-  // 3. Aplica o movimento no personagem
+  // 3. Aplica o movimento diretamente no personagem (eixos fixos do mundo)
   player.position.add(moveVector);
 
-  // 4. Limita o personagem para não sair da ilha (raio = 9.5)
+  // 4. Limita o personagem para não sair dos limites da ilha (raio = 9.5)
   const maxRadius = 9.5;
   const currentRadius = Math.sqrt(player.position.x ** 2 + player.position.z ** 2);
   if (currentRadius > maxRadius) {
