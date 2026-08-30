@@ -1,89 +1,108 @@
-// Configuração da cena, câmera e renderizador
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Alahama - Cenário 3D</title>
+<style>body{margin:0;overflow:hidden} canvas{display:block}</style>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+scene.background = new THREE.Color(0x00e5ff); // seu céu ciano
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0,3,8);
+camera.lookAt(0,0,0);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
+scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(5,10,5);
+scene.add(light);
 
-// Iluminação
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-scene.add(ambientLight);
-
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(10, 20, 15);
-scene.add(directionalLight);
-
-// Grupo do cenário (ilha) que gira
-const worldGroup = new THREE.Group();
-scene.add(worldGroup);
-
-// Criando a ilha (base circular)
-const islandGeometry = new THREE.CylinderGeometry(10, 10, 1, 32);
-const islandMaterial = new THREE.MeshStandardMaterial({ color: 0x2e8b57 });
-const island = new THREE.Mesh(islandGeometry, islandMaterial);
-island.position.y = -0.5;
-worldGroup.add(island);
-
-// Criando o personagem (Homem Caixinha) - Adicionado diretamente à cena
-const playerGeometry = new THREE.BoxGeometry(1, 1, 1);
-const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xff4500 });
-const player = new THREE.Mesh(playerGeometry, playerMaterial);
-player.position.set(0, 0.5, 0);
-scene.add(player);
-
-// Posição da Câmera
-camera.position.set(0, 12, 16);
-camera.lookAt(0, 0, 0);
-
-// Estado dos controles (Teclado)
-const keys = { w: false, a: false, s: false, d: false };
-
-// Eventos de Teclado (Suporta WASD maiúsculo e minúsculo)
-window.addEventListener('keydown', (e) => {
-  const key = e.key.toLowerCase();
-  if (key in keys) keys[key] = true;
-});
-
-window.addEventListener('keyup', (e) => {
-  const key = e.key.toLowerCase();
-  if (key in keys) keys[key] = false;
-});
-
-// Loop principal de Animação
-function animate() {
-  requestAnimationFrame(animate);
-
-  // 1. Rotação contínua da ilha
-  worldGroup.rotation.y += 0.005;
-
-  // 2. Vetor de movimento local baseado no teclado
-  const speed = 0.15;
-  const moveVector = new THREE.Vector3(0, 0, 0);
-
-  if (keys.w) moveVector.z -= speed;
-  if (keys.s) moveVector.z += speed;
-  if (keys.a) moveVector.x -= speed;
-  if (keys.d) moveVector.x += speed;
-
-  // 3. Aplica o movimento diretamente no personagem
-  player.position.add(moveVector);
-
-  // 4. Limita o personagem para não sair dos limites da ilha (raio = 9.5)
-  const maxRadius = 9.5;
-  const currentRadius = Math.sqrt(player.position.x ** 2 + player.position.z ** 2);
-  if (currentRadius > maxRadius) {
-    player.position.x = (player.position.x / currentRadius) * maxRadius;
-    player.position.z = (player.position.z / currentRadius) * maxRadius;
+// FUNÇÃO PRA CRIAR BLOCO COM CONTORNO PRETO
+function criarBloco(x,y,z, cor, comGrama=false){
+  const geo = new THREE.BoxGeometry(1,1,1);
+  // deixa torto igual seu desenho
+  const pos = geo.attributes.position;
+  for(let i=0;i<pos.count;i++){
+    pos.setX(i, pos.getX(i)+(Math.random()-0.5)*0.08);
+    pos.setY(i, pos.getY(i)+(Math.random()-0.5)*0.08);
   }
-
-  renderer.render(scene, camera);
+  const mat = new THREE.MeshToonMaterial({color: cor});
+  const bloco = new THREE.Mesh(geo, mat);
+  bloco.position.set(x,y,z);
+  // contorno preto grosso
+  const contorno = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+  contorno.scale.set(1.15,1.15,1.15);
+  bloco.add(contorno);
+  if(comGrama){
+    const grama = new THREE.Mesh(new THREE.BoxGeometry(1,0.25,1), new THREE.MeshToonMaterial({color:0x00ff00}));
+    grama.position.y = 0.6;
+    const contG = new THREE.Mesh(grama.geometry, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+    contG.scale.set(1.1,1.5,1.1);
+    grama.add(contG);
+    bloco.add(grama);
+  }
+  scene.add(bloco);
+  return bloco;
 }
 
-// Ajuste automático de tela
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+// CENÁRIO DA SUA IMAGEM
+// chão marrom + verde
+for(let x=-8;x<=8;x++){
+ for(let z=-3;z<=2;z++){
+  if(Math.random()>0.1) criarBloco(x, -2, z, 0x8B4513, true);
+ }
+}
+// plataforma cinza
+for(let x=-6;x<=6;x++) criarBloco(x, -0.3, 0, 0x6e6e6e);
+// blocos marrons bagunçados de cima
+criarBloco(-5,0.8,0.5,0x8B4513); criarBloco(-3,0.5,0,0x8B4513);
+criarBloco(-1,0.7,0,0x8B4513); criarBloco(0,0.4,0.5,0x8B4513);
+criarBloco(2,0.9,0,0x8B4513); criarBloco(3.5,0.3,0,0x8B4513);
+criarBloco(5,1.2,0.3,0x8B4513);
 
+// MONSTRO DE 1 OLHO AO FUNDO
+const monstro = new THREE.Mesh(new THREE.SphereGeometry(3,16,16), new THREE.MeshToonMaterial({color:0xffffff}));
+monstro.position.set(0,5,-8); scene.add(monstro);
+const contM = new THREE.Mesh(monstro.geometry, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+contM.scale.set(1.1,1.1,1.1); monstro.add(contM);
+const olhoVermelho = new THREE.Mesh(new THREE.SphereGeometry(0.8,16,16), new THREE.MeshBasicMaterial({color:0xcc0000}));
+olhoVermelho.position.set(0,5,-5.5); scene.add(olhoVermelho);
+const pupila = new THREE.Mesh(new THREE.SphereGeometry(0.3,16,16), new THREE.MeshBasicMaterial({color:0x000000}));
+pupila.position.set(0,5,-5); scene.add(pupila);
+
+// ALAHAMA - PROTAGONISTA VESGO
+const alahama = new THREE.Group();
+const corpoGeo = new THREE.SphereGeometry(0.6,16,16); corpoGeo.scale(1.1,1,0.8);
+const corpo = new THREE.Mesh(corpoGeo, new THREE.MeshToonMaterial({color:0x8a5cff})); alahama.add(corpo);
+const contA = new THREE.Mesh(corpoGeo, new THREE.MeshBasicMaterial({color:0x000000, side:THREE.BackSide}));
+contA.scale.set(1.2,1.2,1.2); alahama.add(contA);
+
+// OLHOS E ANIMAÇÃO
+const eyeMat = new THREE.MeshBasicMaterial({color: 0xffffff});
+const eyeLeft = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), eyeMat);
+eyeLeft.position.set(-0.2, 0.1, 0.5);
+alahama.add(eyeLeft);
+
+const eyeRight = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), eyeMat);
+eyeRight.position.set(0.2, 0.1, 0.5);
+alahama.add(eyeRight);
+
+alahama.position.set(0, 0.8, 1);
+scene.add(alahama);
+
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
 animate();
+</script>
+</body>
+</html>
