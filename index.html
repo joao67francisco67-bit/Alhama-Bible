@@ -1,110 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <title>Alahama - Cenário 3D</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alhama Bíblia</title>
   <style>
     body { margin: 0; overflow: hidden; }
-    canvas { display: block; }
+    #btn-giroscopio {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      padding: 10px 15px;
+      background: #ff4500;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
-  <script type="importmap">
-    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
-  </script>
 </head>
 <body>
-  <script type="module">
-    import * as THREE from 'three';
+  <button id="btn-giroscopio">Ativar Giroscópio (Celular)</button>
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x00e5ff); // céu ciano
-
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 3, 8);
-    camera.lookAt(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5, 10, 5);
-    scene.add(light);
-
-    // FUNÇÃO PARA CRIAR BLOCO COM CONTORNO PRETO
-    function criarBloco(x, y, z, cor, comGrama = false) {
-      const geo = new THREE.BoxGeometry(1, 1, 1);
-      const pos = geo.attributes.position;
-      for (let i = 0; i < pos.count; i++) {
-        pos.setX(i, pos.getX(i) + (Math.random() - 0.5) * 0.08);
-        pos.setY(i, pos.getY(i) + (Math.random() - 0.5) * 0.08);
-      }
-      geo.computeVertexNormals();
-
-      const mat = new THREE.MeshLambertMaterial({ color: cor });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(x, y, z);
-      scene.add(mesh);
-
-      const edges = new THREE.EdgesGeometry(geo);
-      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }));
-      mesh.add(line);
-
-      if (comGrama) {
-        const gramaGeo = new THREE.PlaneGeometry(0.9, 0.9);
-        const gramaMat = new THREE.MeshBasicMaterial({ color: 0x55aa33, side: THREE.DoubleSide });
-        const grama = new THREE.Mesh(gramaGeo, gramaMat);
-        grama.rotation.x = -Math.PI / 2;
-        grama.position.y = 0.51;
-        mesh.add(grama);
-      }
-      return mesh;
-    }
-
-    // TERRENO
-    for (let x = -3; x <= 3; x++) {
-      for (let z = -3; z <= 3; z++) {
-        criarBloco(x, 0, z, 0x8b5a2b, true);
-        if (Math.random() > 0.5) criarBloco(x, -1, z, 0x654321);
-      }
-    }
-
-    // ARVORE
-    criarBloco(2, 1, -1, 0x5c4033);
-    criarBloco(2, 2, -1, 0x5c4033);
-    criarBloco(2, 3, -1, 0x2d8a4e);
-    criarBloco(1.5, 3, -1, 0x2d8a4e);
-    criarBloco(2.5, 3, -1, 0x2d8a4e);
-    criarBloco(2, 3.5, -1, 0x34a853);
-
-    // BONECO
-    const corpo = criarBloco(-1, 1, 1, 0x2266aa);
-    const cabeca = criarBloco(-1, 2, 1, 0xffcc99);
-
-    // Olhos
-    const olhoGeo = new THREE.PlaneGeometry(0.15, 0.15);
-    const olhoMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-    const olhoE = new THREE.Mesh(olhoGeo, olhoMat);
-    olhoE.position.set(-0.2, 0.1, 0.51);
-    cabeca.add(olhoE);
-
-    const olhoD = new THREE.Mesh(olhoGeo, olhoMat);
-    olhoD.position.set(0.2, 0.1, 0.51);
-    cabeca.add(olhoD);
-
-    // ANIMAÇÃO DE ROTAÇÃO
-    function animate() {
-      requestAnimationFrame(animate);
-      scene.rotation.y += 0.005;
-      renderer.render(scene, camera);
-    }
-    animate();
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
+  <!-- Importa a biblioteca Three.js primeiro -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Carrega o seu código JS depois -->
+  <script src="ALAHAMA BIBLIE.js"></script>
 </body>
 </html>
