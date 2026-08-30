@@ -35,10 +35,8 @@ scene.add(player);
 camera.position.set(0, 12, 16);
 camera.lookAt(0, 0, 0);
 
-// Estado dos controles
+// Estado dos controles (Teclado)
 const keys = { w: false, a: false, s: false, d: false };
-let tiltX = 0;
-let tiltY = 0;
 
 // Eventos de Teclado (Suporta WASD maiúsculo e minúsculo)
 window.addEventListener('keydown', (e) => {
@@ -51,34 +49,6 @@ window.addEventListener('keyup', (e) => {
   if (key in keys) keys[key] = false;
 });
 
-// Manipulador do Giroscópio
-function handleOrientation(e) {
-  if (e.beta !== null && e.gamma !== null) {
-    tiltX = Math.max(-1, Math.min(1, e.gamma / 30));
-    tiltY = Math.max(-1, Math.min(1, (e.beta - 45) / 30));
-  }
-}
-
-// Botão para solicitar permissão do giroscópio no celular
-const btnGiro = document.getElementById('btn-giroscopio');
-if (btnGiro) {
-  btnGiro.addEventListener('click', () => {
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      DeviceOrientationEvent.requestPermission()
-        .then(response => {
-          if (response === 'granted') {
-            window.addEventListener('deviceorientation', handleOrientation);
-            btnGiro.style.display = 'none';
-          }
-        })
-        .catch(console.error);
-    } else {
-      window.addEventListener('deviceorientation', handleOrientation);
-      btnGiro.style.display = 'none';
-    }
-  });
-}
-
 // Loop principal de Animação
 function animate() {
   requestAnimationFrame(animate);
@@ -86,24 +56,19 @@ function animate() {
   // 1. Rotação contínua da ilha
   worldGroup.rotation.y += 0.005;
 
-  // 2. Vetor de movimento local baseado nos controles
+  // 2. Vetor de movimento local baseado no teclado
   const speed = 0.15;
   const moveVector = new THREE.Vector3(0, 0, 0);
 
-  // Movimento por Teclado
   if (keys.w) moveVector.z -= speed;
   if (keys.s) moveVector.z += speed;
   if (keys.a) moveVector.x -= speed;
   if (keys.d) moveVector.x += speed;
 
-  // Movimento por Inclinação do Celular
-  if (Math.abs(tiltX) > 0.1) moveVector.x += tiltX * speed;
-  if (Math.abs(tiltY) > 0.1) moveVector.z += tiltY * speed;
-
-  // 3. Aplica o movimento no personagem
+  // 3. Aplica o movimento diretamente no personagem
   player.position.add(moveVector);
 
-  // 4. Limita o personagem para não sair da ilha (raio = 9.5)
+  // 4. Limita o personagem para não sair dos limites da ilha (raio = 9.5)
   const maxRadius = 9.5;
   const currentRadius = Math.sqrt(player.position.x ** 2 + player.position.z ** 2);
   if (currentRadius > maxRadius) {
