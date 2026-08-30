@@ -54,9 +54,8 @@ window.addEventListener('keyup', (e) => {
 // Eventos de Inclinação do Celular (Gyroscope)
 window.addEventListener('deviceorientation', (e) => {
   if (e.beta !== null && e.gamma !== null) {
-    // Normaliza e limita a inclinação para suavizar a movimentação
     tiltX = Math.max(-1, Math.min(1, e.gamma / 30));
-    tiltY = Math.max(-1, Math.min(1, (e.beta - 45) / 30)); // 45° é uma inclinação confortável de segurar
+    tiltY = Math.max(-1, Math.min(1, (e.beta - 45) / 30));
   }
 });
 
@@ -81,13 +80,13 @@ function animate() {
   if (Math.abs(tiltX) > 0.1) moveVector.x += tiltX * speed;
   if (Math.abs(tiltY) > 0.1) moveVector.z += tiltY * speed;
 
-  // Ajusta o vetor de movimento para alinhar com a rotação atual da ilha
+  // Corrigido: ajusta a direção do movimento de acordo com o giro da ilha
   moveVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), worldGroup.rotation.y);
 
   // 3. Aplica o movimento no personagem
   player.position.add(moveVector);
 
-  // 4. Limita o personagem para não sair dos limites da ilha (raio = 9.5)
+  // 4. Limita o personagem para não sair da ilha (raio = 9.5)
   const maxRadius = 9.5;
   const currentRadius = Math.sqrt(player.position.x ** 2 + player.position.z ** 2);
   if (currentRadius > maxRadius) {
@@ -98,7 +97,7 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-// Ajuste automático quando a janela muda de tamanho
+// Ajuste automático de tela
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
