@@ -271,4 +271,233 @@
   });
 </script>
 </body>
-</html>
+</html> <div style="position:fixed; bottom:20px; left:20px; display:grid; grid-template-columns:40px 40px 40px; gap:5px">
+  <div></div><button ontouchstart="keys['w']=true" ontouchend="keys['w']=false" style="height:40px">⬆️</button><div></div>
+  <button ontouchstart="keys['a']=true" ontouchend="keys['a']=false" style="height:40px">⬅️</button>
+  <button ontouchstart="keys['s']=true" ontouchend="keys['s']=false" style="height:40px">⬇️</button>
+  <button ontouchstart="keys['d']=true" ontouchend="keys['d']=false" style="height:40px">➡️</button>
+</div> <!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zombie MJ - Three.js</title>
+<style>body{margin:0;overflow:hidden;background:#111}canvas{display:block}#hud{position:fixed;top:10px;left:10px;color:white;font-family:sans-serif;background:#0008;padding:6px 10px;border-radius:8px}</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<div id="hud">WASD to move Alahama | Zombie MJ is hostile</div>
+<script type="module">
+import * as THREE from 'three';
+
+// --- SCENE ---
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(0,5,10);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light = new THREE.DirectionalLight(0xffffff, 1.2);
+light.position.set(5,10,5);
+scene.add(light);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(50,50), new THREE.MeshStandardMaterial({color:0x222222}));
+floor.rotation.x = -Math.PI/2;
+scene.add(floor);
+
+// --- MATERIALS - ULTRA REALISTIC SKIN TONE MJ INVINCIBLE 2001 ---
+const skinMaterial = new THREE.MeshStandardMaterial({ 
+  color: 0xe8c4a8, // MJ Invincible era skin tone - light beige, NOT GREEN
+  roughness: 0.4,
+  metalness: 0.1
+});
+const blueShirtMaterial = new THREE.MeshStandardMaterial({ color: 0x3b82f6 }); // blue shirt
+const jeansMaterial = new THREE.MeshStandardMaterial({ color: 0x1e3a8a }); // jeans pants
+const nikeMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+
+// --- ALAHAMA (Blue kirby cross-eyed) ---
+const alahamaGroup = new THREE.Group();
+const alahamaBody = new THREE.Mesh(new THREE.SphereGeometry(0.7, 32, 32), new THREE.MeshStandardMaterial({color:0x60a5fa}));
+alahamaGroup.add(alahamaBody);
+scene.add(alahamaGroup);
+alahamaGroup.position.set(-5,0.7,0);
+
+// --- ZOMBIE MJ - HUMAN FULL BODY ---
+const zombieGroup = new THREE.Group();
+
+// Head - realistic
+const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 32), skinMaterial);
+head.position.y = 1.6;
+zombieGroup.add(head);
+
+// Torso - blue shirt
+const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 0.4), blueShirtMaterial);
+torso.position.y = 1.0;
+zombieGroup.add(torso);
+
+// Arms
+const armGeo = new THREE.BoxGeometry(0.18, 0.7, 0.18);
+const leftArm = new THREE.Mesh(armGeo, skinMaterial);
+leftArm.position.set(-0.45, 1.0, 0);
+zombieGroup.add(leftArm);
+const rightArm = new THREE.Mesh(armGeo, skinMaterial);
+rightArm.position.set(0.45, 1.0, 0);
+zombieGroup.add(rightArm);
+
+// Legs - jeans pants
+const legGeo = new THREE.BoxGeometry(0.25, 0.8, 0.25);
+const leftLeg = new THREE.Mesh(legGeo, jeansMaterial);
+leftLeg.position.set(-0.18, 0.2, 0);
+zombieGroup.add(leftLeg);
+const rightLeg = new THREE.Mesh(legGeo, jeansMaterial);
+rightLeg.position.set(0.18, 0.2, 0);
+zombieGroup.add(rightLeg);
+
+// Shoes - Nike sneakers white
+const shoeGeo = new THREE.BoxGeometry(0.28, 0.15, 0.45);
+const leftShoe = new THREE.Mesh(shoeGeo, nikeMaterial);
+leftShoe.position.set(-0.18, -0.25, 0.1);
+zombieGroup.add(leftShoe);
+const rightShoe = new THREE.Mesh(shoeGeo, nikeMaterial);
+rightShoe.position.set(0.18, -0.25, 0.1);
+zombieGroup.add(rightShoe);
+
+scene.add(zombieGroup);
+zombieGroup.position.set(5,0.4,0);
+
+// --- CONTROLS ---
+const keys = {};
+window.onkeydown = e => keys[e.key.toLowerCase()] = true;
+window.onkeyup = e => keys[e.key.toLowerCase()] = false;
+
+// --- HOSTILE AI + MOONWALK ---
+let frame = 0;
+function animate(){
+  requestAnimationFrame(animate);
+  frame += 0.05;
+
+  // Move Alahama
+  if(keys['a'] || keys['arrowleft']) alahamaGroup.position.x -= 0.08;
+  if(keys['d'] || keys['arrowright']) alahamaGroup.position.x += 0.08;
+  if(keys['w'] || keys['arrowup']) alahamaGroup.position.z -= 0.08;
+  if(keys['s'] || keys['arrowdown']) alahamaGroup.position.z += 0.08;
+
+  // Zombie hostile attack
+  const dx = alahamaGroup.position.x - zombieGroup.position.x;
+  const dz = alahamaGroup.position.z - zombieGroup.position.z;
+  const dist = Math.hypot(dx, dz);
+
+  if(dist > 0.9){
+    // Chase
+    zombieGroup.position.x += (dx/dist) * 0.03;
+    zombieGroup.position.z += (dz/dist) * 0.03;
+    
+    // Moonwalk effect - slide backwards while facing player
+    const moonwalkOffset = Math.sin(frame*3) * 0.08;
+    zombieGroup.position.x += moonwalkOffset;
+    
+    // Look at player
+    zombieGroup.lookAt(alahamaGroup.position.x, zombieGroup.position.y, alahamaGroup.position.z);
+    
+    // Walking animation
+    leftLeg.rotation.x = Math.sin(frame*5) * 0.5;
+    rightLeg.rotation.x = -Math.sin(frame*5) * 0.5;
+    leftArm.rotation.x = -Math.sin(frame*5) * 0.5;
+    rightArm.rotation.x = Math.sin(frame*5) * 0.5;
+  } else {
+    // Attack when close
+    zombieGroup.position.y = 0.4 + Math.sin(frame*10)*0.1;
+    document.getElementById('hud').innerText = 'ZOMBIE MJ ATTACKING!';
+  }
+
+  camera.lookAt(alahamaGroup.position);
+  renderer.render(scene, camera);
+}
+animate();
+
+window.onresize = () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+}
+</script>
+</body>
+</html> // --- PICKAXE ---
+const pickaxeGroup = new THREE.Group();
+
+// Handle wood
+const handle = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.03, 0.03, 1.0, 8),
+  new THREE.MeshStandardMaterial({ color: 0x8B4513 })
+);
+handle.position.y = 0.5;
+pickaxeGroup.add(handle);
+
+// Head metal
+const headPick = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.12),
+  new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.2 })
+);
+headPick.position.y = 1.0;
+pickaxeGroup.add(headPick);
+
+// Pick point
+const point = new THREE.Mesh(
+  new THREE.ConeGeometry(0.06, 0.3, 8),
+  new THREE.MeshStandardMaterial({ color: 0x666666 })
+);
+point.rotation.z = Math.PI / 2;
+point.position.set(0.35, 1.0, 0);
+pickaxeGroup.add(point);
+
+pickaxeGroup.position.set(0.5, 0.2, 0);
+pickaxeGroup.rotation.z = Math.PI / 4;
+alahamaGroup.add(pickaxeGroup);
+
+// Attack variables
+let isAttacking = false;
+let attackCooldown = 0;   // PICKAXE ATTACK - Press SPACE or E
+  if((keys[' '] || keys['e']) && !isAttacking && attackCooldown <= 0){
+    isAttacking = true;
+    attackCooldown = 30; // cooldown
+    
+    // Attack animation
+    let attackFrame = 0;
+    const attackAnim = setInterval(() => {
+      attackFrame += 0.3;
+      pickaxeGroup.rotation.z = Math.PI/4 + Math.sin(attackFrame) * 1.5;
+      pickaxeGroup.rotation.x = Math.sin(attackFrame) * 0.5;
+      
+      // Check hit on zombie
+      if(dist < 1.5 && attackFrame > 1){
+        // Hit effect
+        zombieGroup.position.y += 0.3;
+        skinMaterial.color.set(0xff0000); // flash red when hit
+        setTimeout(() => skinMaterial.color.set(0xe8c4a8), 150);
+        
+        // Knockback
+        zombieGroup.position.x -= (dx/dist) * 0.5;
+        zombieGroup.position.z -= (dz/dist) * 0.5;
+        
+        document.getElementById('hud').innerText = 'HIT! Zombie MJ - HP: ' + Math.floor(Math.random()*100);
+      }
+      
+      if(attackFrame > 3.14){
+        clearInterval(attackAnim);
+        pickaxeGroup.rotation.z = Math.PI/4;
+        pickaxeGroup.rotation.x = 0;
+        isAttacking = false;
+      }
+    }, 16);
+  }
+  
+  if(attackCooldown > 0) attackCooldown--;
