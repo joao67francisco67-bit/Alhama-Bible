@@ -630,3 +630,189 @@ animate();
   }
   
   if(attackCooldown > 0) attackCooldown--;
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Alhama Bíblia</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #000; }
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-family: monospace;
+      font-size: 16px;
+      background: rgba(0,0,0,0.5);
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">JOGO CARREGADO</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // --- VARIÁVEIS DO JOGO E CONTROLES ---
+    const keys = {};
+    let isAttacking = false;
+    let attackCooldown = 0;
+    let frame = 0;
+
+    window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+    window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+    // --- CONFIGURAÇÃO DA CENA 3D ---
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5, 10, 7.5);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x404040));
+
+    // --- GRUPOS DOS PERSONAGENS ---
+    const alahamaGroup = new THREE.Group();
+    const zombieGroup = new THREE.Group();
+    const charlieGroup = new THREE.Group(); // Steve do Minecraft
+    const pickaxeGroup = new THREE.Group();
+
+    // Textura / Material da Skin
+    const skinMaterial = new THREE.MeshLambertMaterial({ color: 0xe8c4a8 });
+    const blueMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff });
+    const darkBlueMaterial = new THREE.MeshLambertMaterial({ color: 0x000080 });
+    const greenMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
+
+    // Modelo Alahama (Jogador)
+    const playerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.8, 0.5), skinMaterial);
+    alahamaGroup.add(playerMesh);
+    scene.add(alahamaGroup);
+
+    // Modelo Zumbi MJ
+    const zombieMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.8, 0.5), greenMaterial);
+    const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), darkBlueMaterial);
+    const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), darkBlueMaterial);
+    const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), greenMaterial);
+    const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), greenMaterial);
+    
+    leftLeg.position.set(-0.2, -0.9, 0);
+    rightLeg.position.set(0.2, -0.9, 0);
+    leftArm.position.set(-0.55, 0.1, 0);
+    rightArm.position.set(0.55, 0.1, 0);
+
+    zombieGroup.add(zombieMesh, leftLeg, rightLeg, leftArm, rightArm);
+    zombieGroup.position.set(5, 0, -5);
+    scene.add(zombieGroup);
+
+    // Modelo Charlie (Steve do Minecraft)
+    const steveHead = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), skinMaterial);
+    steveHead.position.y = 0.9;
+    const steveTorso = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.4), blueMaterial);
+    steveTorso.position.y = 0.2;
+    const steveLegs = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.4), darkBlueMaterial);
+    steveLegs.position.y = -0.6;
+
+    charlieGroup.add(steveHead, steveTorso, steveLegs);
+    charlieGroup.position.set(-3, 0, -3);
+    scene.add(charlieGroup);
+
+    // Picareta do Jogador
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1, 0.1), new THREE.MeshLambertMaterial({ color: 0x8b4513 }));
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 0.1), new THREE.MeshLambertMaterial({ color: 0x808080 }));
+    head.position.y = 0.4;
+    pickaxeGroup.add(handle, head);
+    pickaxeGroup.position.set(0.5, 0, 0.3);
+    alahamaGroup.add(pickaxeGroup);
+
+    // Posicionamento da Câmera
+    camera.position.set(0, 5, 8);
+
+    // --- LOOP DE ANIMAÇÃO PRINCIPAL ---
+    function animate() {
+      requestAnimationFrame(animate);
+      frame += 0.05;
+
+      // Movimentação do Alahama
+      if (keys['a'] || keys['arrowleft']) alahamaGroup.position.x -= 0.08;
+      if (keys['d'] || keys['arrowright']) alahamaGroup.position.x += 0.08;
+      if (keys['w'] || keys['arrowup']) alahamaGroup.position.z -= 0.08;
+      if (keys['s'] || keys['arrowdown']) alahamaGroup.position.z += 0.08;
+
+      // Zumbi Segue o Jogador (Hostile AI + Moonwalk)
+      const dx = alahamaGroup.position.x - zombieGroup.position.x;
+      const dz = alahamaGroup.position.z - zombieGroup.position.z;
+      const dist = Math.hypot(dx, dz) || 1;
+
+      if (dist > 0.9) {
+        zombieGroup.position.x += (dx / dist) * 0.03 + Math.sin(frame * 3) * 0.02;
+        zombieGroup.position.z += (dz / dist) * 0.03;
+        zombieGroup.lookAt(alahamaGroup.position.x, zombieGroup.position.y, alahamaGroup.position.z);
+
+        leftLeg.rotation.x = Math.sin(frame * 5) * 0.5;
+        rightLeg.rotation.x = -Math.sin(frame * 5) * 0.5;
+        leftArm.rotation.x = -Math.sin(frame * 5) * 0.5;
+        rightArm.rotation.x = Math.sin(frame * 5) * 0.5;
+      } else {
+        zombieGroup.position.y = Math.sin(frame * 10) * 0.05;
+        document.getElementById('hud').innerText = 'ZOMBIE MJ ATTACKING!';
+      }
+
+      // Charlie (Steve) Segue o Jogador
+      const cdx = alahamaGroup.position.x - charlieGroup.position.x;
+      const cdz = alahamaGroup.position.z - charlieGroup.position.z;
+      const cDist = Math.hypot(cdx, cdz);
+
+      if (cDist > 2.5) {
+        charlieGroup.position.x += (cdx / cDist) * 0.02;
+        charlieGroup.position.z += (cdz / cDist) * 0.02;
+        charlieGroup.lookAt(alahamaGroup.position.x, 0, alahamaGroup.position.z);
+      }
+
+      // Ataque de Picareta (ESPAÇO ou E)
+      if ((keys[' '] || keys['e']) && !isAttacking && attackCooldown <= 0) {
+        isAttacking = true;
+        attackCooldown = 30;
+        let aFrame = 0;
+
+        const anim = setInterval(() => {
+          aFrame += 0.3;
+          pickaxeGroup.rotation.z = Math.PI / 4 + Math.sin(aFrame) * 1.5;
+
+          if (dist < 1.5 && aFrame > 1) {
+            zombieGroup.position.x -= (dx / dist) * 0.5;
+            zombieGroup.position.z -= (dz / dist) * 0.5;
+            document.getElementById('hud').innerText = 'HIT! Zombie MJ recuou!';
+          }
+
+          if (aFrame > 3.14) {
+            clearInterval(anim);
+            pickaxeGroup.rotation.z = Math.PI / 4;
+            isAttacking = false;
+          }
+        }, 16);
+      }
+
+      if (attackCooldown > 0) attackCooldown--;
+
+      // Atualizar Câmera e Renderizador
+      camera.lookAt(alahamaGroup.position);
+      renderer.render(scene, camera);
+    }
+
+    // Inicializa o loop
+    animate();
+
+    // Redimensionar janela
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
