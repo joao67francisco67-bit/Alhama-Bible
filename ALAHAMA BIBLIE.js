@@ -495,7 +495,136 @@ let attackCooldown = 0;   // PICKAXE ATTACK - Press SPACE or E
         clearInterval(attackAnim);
         pickaxeGroup.rotation.z = Math.PI/4;
         pickaxeGroup.rotation.x = 0;
-        isAttacking = false;
+        isAttacking = false; <!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alahama Game</title>
+<style>body{margin:0;overflow:hidden;background:#111}canvas{display:block}#hud{position:fixed;top:10px;left:10px;color:#fff;font-family:sans-serif;background:#0008;padding:6px 10px;border-radius:8px}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+<div id="hud">WASD Move | SPACE Pickaxe | Charlie Follows You</div>
+<script type="module">
+import * as THREE from 'three';
+
+// SCENE
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(0,6,12);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+scene.add(new THREE.DirectionalLight(0xffffff, 1.2).position.set(5,10,5));
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(50,50), new THREE.MeshStandardMaterial({color:0x222222}));
+floor.rotation.x = -Math.PI/2;
+scene.add(floor);
+
+// MATERIALS
+const skinMaterialMJ = new THREE.MeshStandardMaterial({color:0xe8c4a8, roughness:0.4});
+const blueShirtMat = new THREE.MeshStandardMaterial({color:0x3b82f6});
+const jeansMat = new THREE.MeshStandardMaterial({color:0x1e3a8a});
+const whiteMat = new THREE.MeshStandardMaterial({color:0xffffff});
+const redShirtMat = new THREE.MeshStandardMaterial({color:0xff0000});
+const greenPantsMat = new THREE.MeshStandardMaterial({color:0x00aa00});
+const skinMat = new THREE.MeshStandardMaterial({color:0xe8c4a8});
+
+// ALAHAMA - blue cross-eyed kirby
+const alahamaGroup = new THREE.Group();
+alahamaGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.7,32,32), new THREE.MeshStandardMaterial({color:0x60a5fa})));
+scene.add(alahamaGroup);
+alahamaGroup.position.set(-5,0.7,0);
+
+// PICKAXE
+const pickaxeGroup = new THREE.Group();
+const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,1.0,8), new THREE.MeshStandardMaterial({color:0x8B4513}));
+handle.position.y = 0.5; pickaxeGroup.add(handle);
+const pickHead = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.12,0.12), new THREE.MeshStandardMaterial({color:0x888888, metalness:0.8}));
+pickHead.position.y = 1.0; pickaxeGroup.add(pickHead);
+pickaxeGroup.position.set(0.5,0.2,0); pickaxeGroup.rotation.z = Math.PI/4;
+alahamaGroup.add(pickaxeGroup);
+
+// ZOMBIE MJ - HUMAN, ULTRA REALISTIC, NOT GREEN, INVINCIBLE ERA 2001
+const zombieGroup = new THREE.Group();
+function createBox(w,h,d,mat,x,y,z){ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.set(x,y,z); return m; }
+zombieGroup.add(createBox(0.4,0.4,0.4, skinMaterialMJ, 0,1.6,0)); // head
+zombieGroup.add(createBox(0.7,0.8,0.4, blueShirtMat, 0,1.0,0)); // blue shirt
+zombieGroup.add(createBox(0.18,0.7,0.18, skinMaterialMJ, -0.45,1.0,0)); // arms
+zombieGroup.add(createBox(0.18,0.7,0.18, skinMaterialMJ, 0.45,1.0,0));
+zombieGroup.add(createBox(0.25,0.8,0.25, jeansMat, -0.18,0.2,0)); // jeans pants
+zombieGroup.add(createBox(0.25,0.8,0.25, jeansMat, 0.18,0.2,0));
+zombieGroup.add(createBox(0.28,0.15,0.45, whiteMat, -0.18,-0.25,0.1)); // nike shoes
+zombieGroup.add(createBox(0.28,0.15,0.45, whiteMat, 0.18,-0.25,0.1));
+zombieGroup.position.set(5,0.4,0);
+scene.add(zombieGroup);
+
+// CHARLIE - MINECRAFT STEVE, RED SHIRT, GREEN PANTS
+const charlieGroup = new THREE.Group();
+charlieGroup.add(createBox(0.4,0.4,0.4, skinMat, 0,1.7,0)); // head
+charlieGroup.add(createBox(0.5,0.6,0.25, redShirtMat, 0,1.2,0)); // red shirt
+charlieGroup.add(createBox(0.15,0.6,0.15, skinMat, -0.325,1.2,0)); // arm left
+charlieGroup.add(createBox(0.15,0.6,0.15, skinMat, 0.325,1.2,0)); // arm right
+charlieGroup.add(createBox(0.2,0.6,0.2, greenPantsMat, -0.125,0.6,0)); // green pants left
+charlieGroup.add(createBox(0.2,0.6,0.2, greenPantsMat, 0.125,0.6,0)); // green pants right
+charlieGroup.position.set(-3,0.4,3);
+scene.add(charlieGroup);
+
+// NAME TAG CHARLIE
+const canvas = document.createElement('canvas'); canvas.width=256; canvas.height=64;
+const ctx = canvas.getContext('2d'); ctx.fillStyle='black'; ctx.fillRect(0,0,256,64); ctx.fillStyle='white'; ctx.font='Bold 30px Arial'; ctx.fillText('Charlie',70,40);
+const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(canvas)}));
+sprite.position.set(0,2.3,0); sprite.scale.set(1.5,0.4,1); charlieGroup.add(sprite);
+
+// CONTROLS
+const keys={}; onkeydown=e=>keys[e.key.toLowerCase()]=true; onkeyup=e=>keys[e.key.toLowerCase()]=false;
+let frame=0, isAttacking=false, cooldown=0;
+
+function animate(){
+  requestAnimationFrame(animate); frame+=0.05;
+  // MOVE ALAHAMA
+  if(keys['a']) alahamaGroup.position.x-=0.08;
+  if(keys['d']) alahamaGroup.position.x+=0.08;
+  if(keys['w']) alahamaGroup.position.z-=0.08;
+  if(keys['s']) alahamaGroup.position.z+=0.08;
+
+  // ZOMBIE MJ HOSTILE AI + MOONWALK
+  const dx=alahamaGroup.position.x - zombieGroup.position.x;
+  const dz=alahamaGroup.position.z - zombieGroup.position.z;
+  const dist=Math.hypot(dx,dz)||1;
+  if(dist>0.9){
+    zombieGroup.position.x+=(dx/dist)*0.03 + Math.sin(frame*3)*0.02; // moonwalk slide
+    zombieGroup.position.z+=(dz/dist)*0.03;
+    zombieGroup.lookAt(alahamaGroup.position.x, zombieGroup.position.y, alahamaGroup.position.z);
+  }
+
+  // CHARLIE FOLLOW
+  const cdx=alahamaGroup.position.x - charlieGroup.position.x;
+  const cdz=alahamaGroup.position.z - charlieGroup.position.z;
+  const cDist=Math.hypot(cdx,cdz);
+  if(cDist>2.5){ charlieGroup.position.x+=(cdx/cDist)*0.015; charlieGroup.position.z+=(cdz/cDist)*0.015; charlieGroup.lookAt(alahamaGroup.position.x,0, alahamaGroup.position.z); }
+
+  // PICKAXE ATTACK
+  if((keys[' ']||keys['e']) && !isAttacking && cooldown<=0){
+    isAttacking=true; cooldown=30;
+    let aFrame=0;
+    const anim=setInterval(()=>{
+      aFrame+=0.3; pickaxeGroup.rotation.z=Math.PI/4 + Math.sin(aFrame)*1.5;
+      if(dist<1.5 && aFrame>1){ zombieGroup.position.x-=(dx/dist)*0.5; zombieGroup.position.z-=(dz/dist)*0.5; }
+      if(aFrame>3.14){ clearInterval(anim); pickaxeGroup.rotation.z=Math.PI/4; isAttacking=false; }
+    },16);
+  }
+  if(cooldown>0) cooldown--;
+
+  camera.lookAt(alahamaGroup.position);
+  renderer.render(scene,camera);
+}
+animate();
+</script>
+</body>
+</html>
       }
     }, 16);
   }
